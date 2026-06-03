@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from app import models, schemas
 from app.services.ai import AIService
+from app.utils.guardrails import check_input_for_jailbreak
 import datetime
 
 class SimulationService:
@@ -60,7 +61,36 @@ class SimulationService:
         if not sim or sim.status != "in_progress":
             return sim
 
-        # 1. Add the educator's message
+        # Run LangChain security guardrail check first
+        guardrail_result = await check_input_for_jailbreak(educator_content)
+        if guardrail_result.is_jailbreak:
+            # Add the educator's message to the chat history
+            educator_msg = models.Message(
+                simulation_id=simulation_id,
+                sender="educator",
+                content=educator_content,
+                escalation_change=0
+            )
+            db.add(educator_msg)
+            
+            # Add the system warning message to block the injection from reaching the student agent
+            system_warning = (
+                "🚨 Security Guardrails: Your response was flagged as a potential system prompt override, "
+                "roleplay bypass, or off-topic command. Please stay in character and focus on practicing "
+                "behavior skill interventions with the student."
+            )
+            system_msg = models.Message(
+                simulation_id=simulation_id,
+                sender="system",
+                content=system_warning,
+                escalation_change=0
+            )
+            db.add(system_msg)
+            db.commit()
+            db.refresh(sim)
+            return sim
+
+        # 1. Add the educator's message (cleared by guardrails)
         educator_msg = models.Message(
             simulation_id=simulation_id,
             sender="educator",

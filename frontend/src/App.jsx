@@ -894,7 +894,11 @@ function App() {
                     {activeSim.messages.map(m => (
                       <div key={m.id} className={`message-bubble ${m.sender}`}>
                         <div style={{ fontWeight: 'bold', fontSize: '0.75rem', opacity: 0.7, marginBottom: '0.2rem' }}>
-                          {m.sender === 'student' ? activeSim.persona.name : 'Educator (You)'}
+                          {m.sender === 'student' 
+                            ? activeSim.persona.name 
+                            : m.sender === 'system' 
+                            ? 'Security Guardrails' 
+                            : 'Educator (You)'}
                         </div>
                         {m.content}
                       </div>
