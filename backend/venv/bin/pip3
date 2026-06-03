@@ -1,4 +1,4 @@
-#!/home/matt/quantshop/intervene_ai/backend/venv/bin/python3
+#!/home/matt/quantshop/intervene_ai/backend/venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys
