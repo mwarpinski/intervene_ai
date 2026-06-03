@@ -1,0 +1,577 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Calming Nature/Sand Palette */
+  --primary: #4a6d5d;       /* Calming Sage Green */
+  --primary-rgb: 74, 109, 93;
+  --primary-light: #eef3f0;
+  --primary-hover: #3d594c;
+  
+  --secondary: #4a5c6a;     /* Deep Slate Blue */
+  --secondary-light: #ebf0f3;
+  
+  --accent: #d48265;        /* Terracotta Warmth */
+  --accent-light: #fbf0eb;
+  --accent-hover: #c46e52;
+
+  --success: #2e7d32;
+  --success-light: #e8f5e9;
+  --warning: #ed6c02;
+  --warning-light: #fff7e6;
+  --danger: #d32f2f;
+  --danger-light: #ffebee;
+
+  --bg: #f9f9f8;            /* Soft sand/eggshell */
+  --card-bg: #ffffff;
+  --text: #2d312e;          /* Off-black charcoal */
+  --text-muted: #6b706c;
+  --text-light: #ffffff;
+  --border: #e2e6e3;
+  --shadow-sm: 0 2px 4px rgba(74, 109, 93, 0.04);
+  --shadow: 0 10px 25px -5px rgba(74, 109, 93, 0.08), 0 8px 16px -6px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 20px 40px -10px rgba(74, 109, 93, 0.12), 0 12px 24px -8px rgba(0, 0, 0, 0.04);
+  
+  --font-heading: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+  --radius-sm: 8px;
+  --radius: 16px;
+  --radius-lg: 24px;
+  
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+[data-theme="dark"] {
+  --primary: #8cbfa8;
+  --primary-rgb: 140, 191, 168;
+  --primary-light: #1c2b23;
+  --primary-hover: #a2cdb9;
+  
+  --secondary: #8ba2b3;
+  --secondary-light: #202b33;
+  
+  --accent: #e59a82;
+  --accent-light: #35231c;
+  --accent-hover: #f1aa93;
+
+  --success: #81c784;
+  --success-light: #1b3823;
+  --warning: #ffb74d;
+  --warning-light: #3e2e17;
+  --danger: #e57373;
+  --danger-light: #3b1c1c;
+
+  --bg: #121413;            /* Rich dark soil/charcoal */
+  --card-bg: #1a1e1b;
+  --text: #e2e8e4;
+  --text-muted: #959e97;
+  --border: #282f2a;
+  
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Glassmorphism Navigation Bar */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: rgba(var(--primary-rgb), 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-logo {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+}
+
+.nav-btn:hover {
+  color: var(--primary);
+  background-color: rgba(var(--primary-rgb), 0.05);
+}
+
+.nav-btn.active {
+  color: var(--primary);
+  background-color: var(--primary-light);
+  font-weight: 600;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  transition: all 0.2s ease;
+}
+
+.theme-toggle:hover {
+  background-color: var(--border);
+  transform: rotate(15deg);
+}
+
+/* Layout container */
+.container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+  flex: 1;
+}
+
+/* Main Cards */
+.card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  box-shadow: var(--shadow);
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+}
+
+.card-title {
+  font-family: var(--font-heading);
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  color: var(--primary);
+}
+
+.card-subtitle {
+  color: var(--text-muted);
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Custom Interactive Components */
+.btn {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: var(--text-light);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: var(--secondary-light);
+  color: var(--secondary);
+}
+
+.btn-secondary:hover {
+  background-color: var(--border);
+}
+
+.btn-accent {
+  background-color: var(--accent);
+  color: var(--text-light);
+}
+
+.btn-accent:hover {
+  background-color: var(--accent-hover);
+}
+
+/* Grid Layouts */
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .grid-2, .grid-3 {
+    grid-template-columns: 1fr;
+  }
+  .navbar {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+}
+
+/* Simulation Chat Interface */
+.sim-container {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1.5rem;
+  height: 600px;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.sim-sidebar {
+  border-right: 1px solid var(--border);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  background-color: rgba(var(--primary-rgb), 0.02);
+  overflow: hidden;
+}
+
+.sim-main {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background-color: rgba(var(--primary-rgb), 0.01);
+}
+
+.message-bubble {
+  max-width: 75%;
+  padding: 1rem 1.25rem;
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  position: relative;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.message-bubble.student {
+  background-color: var(--secondary-light);
+  color: var(--text);
+  border-bottom-left-radius: 4px;
+  align-self: flex-start;
+}
+
+.message-bubble.educator {
+  background-color: var(--primary);
+  color: var(--text-light);
+  border-bottom-right-radius: 4px;
+  align-self: flex-end;
+}
+
+.chat-input-area {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 0.75rem;
+  background-color: var(--card-bg);
+}
+
+.chat-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.chat-input:focus {
+  border-color: var(--primary);
+}
+
+/* Stress Meter Widget */
+.stress-meter-container {
+  margin: 1rem 0;
+}
+
+.stress-meter-track {
+  height: 12px;
+  background-color: var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.stress-meter-fill {
+  height: 100%;
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.8s ease;
+}
+
+/* Dynamic color transitions for stress level */
+.stress-low {
+  background-color: var(--success);
+}
+.stress-med {
+  background-color: var(--warning);
+}
+.stress-high {
+  background-color: var(--danger);
+  animation: pulseWarning 1.5s infinite;
+}
+
+/* Breathing Circles for Self Care */
+.breathing-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  background-color: rgba(var(--primary-rgb), 0.02);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  min-height: 350px;
+}
+
+.breathing-circle-outer {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background-color: var(--primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 2rem;
+  box-shadow: 0 0 40px rgba(var(--primary-rgb), 0.1);
+}
+
+.breathing-circle-inner {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+  z-index: 2;
+  transition: all 4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* State-controlled breathing animation scale classes */
+.b-inhale {
+  transform: scale(1.8);
+  background-color: var(--primary);
+}
+.b-hold {
+  transform: scale(1.8);
+  background-color: var(--accent);
+}
+.b-exhale {
+  transform: scale(1);
+  background-color: var(--secondary);
+}
+.b-rest {
+  transform: scale(1);
+  background-color: var(--primary-hover);
+}
+
+/* Quiz Option Card */
+.option-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  background-color: var(--card-bg);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.option-card:hover {
+  background-color: var(--primary-light);
+  border-color: var(--primary);
+  transform: translateX(4px);
+}
+
+.option-card.selected {
+  background-color: var(--primary-light);
+  border-color: var(--primary);
+  font-weight: 600;
+}
+
+/* Keyframes */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseWarning {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+    box-shadow: 0 0 10px rgba(211, 47, 47, 0.4);
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Radar chart container alignment */
+.radar-container {
+  max-width: 450px;
+  margin: 0 auto;
+}
+
+/* Custom Callout Box for Traps */
+.trap-callout {
+  border-left: 4px solid var(--danger);
+  background-color: var(--danger-light);
+  padding: 1rem 1.25rem;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin-bottom: 1rem;
+}
+
+.trap-callout h4 {
+  margin: 0 0 0.25rem 0;
+  color: var(--danger);
+  font-family: var(--font-heading);
+}
+
+.success-callout {
+  border-left: 4px solid var(--success);
+  background-color: var(--success-light);
+  padding: 1rem 1.25rem;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin-bottom: 1rem;
+  color: var(--success);
+}
+
+.success-callout h4 {
+  margin: 0 0 0.25rem 0;
+  font-family: var(--font-heading);
+}
+
+.dashboard-stat-card {
+  border: 1px solid var(--border);
+  background-color: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard-stat-value {
+  font-family: var(--font-heading);
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0.5rem 0 0.25rem 0;
+}
