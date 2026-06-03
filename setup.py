@@ -116,21 +116,12 @@ def main():
         sys.exit(1)
 
     print_step("Setup Completed Successfully!")
-    print("\nTo start the application, open two terminals and run:")
-    print("\n[Terminal 1 - Backend]")
+    print("\nTo start both backend and frontend servers with a single command, run:")
     if os_type == "Windows":
-        print(f"  cd backend")
-        print(f"  .\\venv\\Scripts\\activate")
-        print(f"  uvicorn app.main:app --reload")
+        print("  python run.py")
     else:
-        print(f"  cd backend")
-        print(f"  source venv/bin/activate")
-        print(f"  uvicorn app.main:app --reload")
-        
-    print("\n[Terminal 2 - Frontend]")
-    print(f"  cd frontend")
-    print(f"  npm run dev")
-    print("\nOpen http://localhost:5173/ in your browser once both are running.")
+        print("  ./run.py   (or python3 run.py)")
+    print("\nOpen http://localhost:5173/ in your browser once the servers have started.")
 
 if __name__ == "__main__":
     main()

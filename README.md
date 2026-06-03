@@ -130,17 +130,33 @@ cd intervene_ai
 
 ## Running the Application
 
-For the application to function correctly, both the backend server and frontend development server must run simultaneously.
+Both the backend and frontend servers must run simultaneously for the application to function correctly. 
 
-### Start the FastAPI Backend
+### Quick Run (One-Liner)
+
+You can launch both the backend and frontend servers together using our single-command launcher script:
+
+```bash
+python3 run.py
+```
+*(Or `./run.py` on Linux/macOS)*
+
+This script concurrently starts both services, forwards logs to your terminal, and listens for a `Ctrl+C` command to cleanly stop both servers (preventing orphaned processes).
+
+---
+
+### Manual Run (Alternative)
+
+If you prefer to run them in separate terminals:
+
+#### Start the FastAPI Backend
 From the `backend` directory (with your virtual environment activated):
 ```bash
 uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
-- **Interactive OpenAPI/Swagger Docs**: Available at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- **Database Initializer**: Automatically seeds default student personas on start.
+- **Interactive OpenAPI Docs**: Available at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
-### Start the Vite Frontend
+#### Start the Vite Frontend
 From the `frontend` directory:
 ```bash
 npm run dev
