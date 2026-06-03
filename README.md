@@ -47,7 +47,7 @@ To run the platform locally, you must install the following runtimes natively on
 
 1. Clone the repository and navigate into the project directory:
    ```bash
-   git clone https://github.com/your-username/intervene_ai.git
+   git clone https://github.com/mwarpinski/intervene_ai.git
    cd intervene_ai
    ```
 
@@ -71,7 +71,7 @@ This script will:
 ### 0. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/intervene_ai.git
+git clone https://github.com/mwarpinski/intervene_ai.git
 cd intervene_ai
 ```
 
