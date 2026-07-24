@@ -6,6 +6,7 @@ from app.database import engine, Base, get_db
 from app import models, schemas
 from app.services.simulation import SimulationService
 from app.services.ai import AIService
+from app.utils import auth as auth_utils
 import datetime
 
 # Create database tables
@@ -21,6 +22,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # Seed default personas on startup
 @app.on_event("startup")
@@ -107,10 +109,98 @@ def seed_personas():
 
 # --- API ENDPOINTS ---
 
+# Authentication & Bot Prevention
+@app.post("/api/v1/auth/signup", response_model=schemas.TokenResponse)
+async def signup(payload: schemas.UserSignup, db: Session = Depends(get_db)):
+    # 1. Verify Cloudflare Turnstile CAPTCHA token
+    is_valid_captcha = await auth_utils.verify_turnstile_captcha(payload.captcha_token)
+    if not is_valid_captcha:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="CAPTCHA verification failed. Please try again or complete bot check."
+        )
+
+    # 2. Check if email already exists
+    existing_user = db.query(models.User).filter(models.User.email == payload.email).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="An account with this email address already exists."
+        )
+
+    # 3. Hash password & create user
+    hashed_pwd = auth_utils.hash_password(payload.password)
+    new_user = models.User(
+        email=payload.email,
+        first_name=payload.first_name,
+        role=payload.role or "teacher",
+        grade_level=payload.grade_level,
+        school_id=payload.school_id,
+        hashed_password=hashed_pwd
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    # 4. Generate JWT Token
+    access_token = auth_utils.create_access_token(user_id=new_user.id, email=new_user.email)
+
+    return schemas.TokenResponse(
+        access_token=access_token,
+        token_type="bearer",
+        user=schemas.UserResponse.from_orm(new_user)
+    )
+
+
+@app.post("/api/v1/auth/login", response_model=schemas.TokenResponse)
+async def login(payload: schemas.UserLogin, db: Session = Depends(get_db)):
+    # 1. Verify Cloudflare Turnstile CAPTCHA token
+    is_valid_captcha = await auth_utils.verify_turnstile_captcha(payload.captcha_token)
+    if not is_valid_captcha:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="CAPTCHA verification failed. Please complete the bot check."
+        )
+
+    # 2. Authenticate User
+    user = db.query(models.User).filter(models.User.email == payload.email).first()
+    if not user or not user.hashed_password:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password."
+        )
+
+    if not auth_utils.verify_password(payload.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password."
+        )
+
+    # 3. Issue Token
+    access_token = auth_utils.create_access_token(user_id=user.id, email=user.email)
+
+    return schemas.TokenResponse(
+        access_token=access_token,
+        token_type="bearer",
+        user=schemas.UserResponse.from_orm(user)
+    )
+
+
+@app.get("/api/v1/auth/me", response_model=schemas.UserResponse)
+def get_me(current_user: models.User = Depends(auth_utils.get_current_user)):
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated or token expired."
+        )
+    return schemas.UserResponse.from_orm(current_user)
+
+
 # Personas
 @app.get("/api/v1/personas", response_model=List[schemas.PersonaResponse])
 def get_personas(db: Session = Depends(get_db)):
     return db.query(models.Persona).all()
+
 
 @app.post("/api/v1/personas", response_model=schemas.PersonaResponse)
 def create_persona(persona: schemas.PersonaCreate, db: Session = Depends(get_db)):
@@ -122,10 +212,19 @@ def create_persona(persona: schemas.PersonaCreate, db: Session = Depends(get_db)
 
 # Simulations
 @app.post("/api/v1/simulations", response_model=schemas.SimulationResponse)
-def start_simulation(payload: schemas.SimulationCreate, db: Session = Depends(get_db)):
+def start_simulation(
+    payload: schemas.SimulationCreate, 
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth_utils.get_current_user)
+):
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required. Please sign in or create an account to start an AI simulation."
+        )
     return SimulationService.create_simulation(
         db=db,
-        user_id=payload.user_id,
+        user_id=current_user.id,
         persona_id=payload.persona_id,
         scenario_type=payload.scenario_type
     )
@@ -138,7 +237,17 @@ def get_simulation_details(sim_id: str, db: Session = Depends(get_db)):
     return sim
 
 @app.post("/api/v1/simulations/{sim_id}/step", response_model=schemas.SimulationDetailsResponse)
-async def simulation_step(sim_id: str, payload: schemas.MessageCreate, db: Session = Depends(get_db)):
+async def simulation_step(
+    sim_id: str, 
+    payload: schemas.MessageCreate, 
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth_utils.get_current_user)
+):
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required. Please sign in to send messages to the AI simulator."
+        )
     sim = db.query(models.Simulation).filter(models.Simulation.id == sim_id).first()
     if not sim:
         raise HTTPException(status_code=404, detail="Simulation not found")
@@ -147,6 +256,7 @@ async def simulation_step(sim_id: str, payload: schemas.MessageCreate, db: Sessi
     
     updated_sim = await SimulationService.process_step(db, sim_id, payload.content)
     return updated_sim
+
 
 @app.post("/api/v1/simulations/{sim_id}/evaluate", response_model=schemas.FeedbackResponse)
 async def evaluate_simulation(sim_id: str, db: Session = Depends(get_db)):

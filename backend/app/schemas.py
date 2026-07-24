@@ -24,6 +24,28 @@ class UserResponse(UserBase):
         from_attributes = True
 
 
+class UserSignup(UserBase):
+    password: str
+    captcha_token: Optional[str] = None
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+    captcha_token: Optional[str] = None
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
+
+class CaptchaVerification(BaseModel):
+    captcha_token: str
+
+
+
 # --- Persona Schemas ---
 class PersonaBase(BaseModel):
     name: str

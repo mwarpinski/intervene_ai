@@ -17,14 +17,24 @@ import {
   RotateCcw,
   ArrowRight,
   HelpCircle,
-  ShieldAlert
+  ShieldAlert,
+  LogOut,
+  LogIn,
+  UserCheck
 } from 'lucide-react';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import AuthModal from './components/AuthModal';
 
 const API_BASE = 'http://localhost:8000/api/v1';
 
-function App() {
+function MainAppContent() {
+  const { user, logout, token } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState('login');
+
   const [theme, setTheme] = useState('light');
   const [activeTab, setActiveTab] = useState('dashboard');
+
   const [personas, setPersonas] = useState([]);
   const [activeSim, setActiveSim] = useState(null);
   const [chatInput, setChatInput] = useState('');
@@ -199,20 +209,52 @@ function App() {
   const startSimulation = async (personaId) => {
     setIsLoading(true);
     setFeedback(null);
+
+    const selectedPersona = personas.find(p => p.id === personaId) || mockPersonas[0];
+    const initialTriggerText = selectedPersona.name === "Leo" 
+      ? "*stands up, walks around the room, taps others* Dinosaurs don't do math! I'm not sitting down!"
+      : selectedPersona.name === "Maya"
+      ? "*head down, hood up, whispering* I don't know the answers. Just leave me alone."
+      : selectedPersona.name === "Jordan"
+      ? "*scoffs, rolling eyes, looks at phone* This assignment is completely pointless. I'm not wasting my time."
+      : "*paces aggressively, slams desk* Get out of my face! I don't give a damn about this stupid class!";
+
+    if (!user) {
+      // Unauthenticated users land on the agent page preview
+      setActiveSim({
+        id: 'preview-session-' + Date.now(),
+        persona: selectedPersona,
+        persona_id: selectedPersona.id,
+        status: 'in_progress',
+        escalation_score: selectedPersona.name === "Jax" ? 80 : 60,
+        messages: [
+          { id: '1', sender: 'student', content: initialTriggerText, escalation_change: 0, created_at: new Date().toISOString() }
+        ]
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch(`${API_BASE}/simulations`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
-          user_id: 'educator-demo',
+          user_id: user.id,
           persona_id: personaId,
           scenario_type: 'Classroom Transition'
         })
       });
 
+
       if (res.ok) {
         const data = await res.json();
-        const detailsRes = await fetch(`${API_BASE}/simulations/${data.id}`);
+        const detailsRes = await fetch(`${API_BASE}/simulations/${data.id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         const detailsData = await detailsRes.json();
         setActiveSim(attachPersona(detailsData));
       } else {
@@ -265,9 +307,15 @@ function App() {
 
   // Submit dialogue step
   const submitStep = async (content) => {
+    if (!user) {
+      setAuthModalMode('login');
+      setIsAuthModalOpen(true);
+      return;
+    }
     if (!content.trim() || isLoading) return;
     setIsLoading(true);
     setChatInput('');
+
 
     try {
       if (activeSim.id.startsWith('mock-session-')) {
@@ -377,9 +425,13 @@ function App() {
         // Connect to FastAPI Backend
         const res = await fetch(`${API_BASE}/simulations/${activeSim.id}/step`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify({ sender: 'educator', content })
         });
+
         if (res.ok) {
           const data = await res.json();
           setActiveSim(attachPersona(data));
@@ -551,8 +603,51 @@ function App() {
           <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle Theme">
             {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
           </button>
+
+          {/* User Auth Bar */}
+          {user ? (
+            <div className="flex items-center gap-2 bg-slate-800/80 border border-slate-700/80 rounded-xl px-3 py-1.5 ml-2 shadow-sm">
+              <div className="w-7 h-7 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shadow">
+                {user.first_name ? user.first_name[0].toUpperCase() : <UserCheck size={14} />}
+              </div>
+              <div className="text-left hidden sm:block leading-tight">
+                <div className="text-xs font-semibold text-white">{user.first_name || user.email.split('@')[0]}</div>
+                <div className="text-[10px] text-indigo-400 font-medium">{user.role || 'Educator'}</div>
+              </div>
+              <button 
+                onClick={logout} 
+                className="ml-1 p-1 text-slate-400 hover:text-rose-400 hover:bg-slate-700/60 rounded-lg transition-all"
+                title="Sign Out"
+              >
+                <LogOut size={16} />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 ml-2">
+              <button 
+                onClick={() => { setAuthModalMode('login'); setIsAuthModalOpen(true); }}
+                className="nav-btn flex items-center gap-1 text-xs font-semibold text-indigo-400 hover:text-indigo-300"
+              >
+                <LogIn size={16} /> Sign In
+              </button>
+              <button 
+                onClick={() => { setAuthModalMode('signup'); setIsAuthModalOpen(true); }}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-3 py-1.5 rounded-lg transition-all shadow-md flex items-center gap-1"
+              >
+                <Sparkles size={14} /> Sign Up
+              </button>
+            </div>
+          )}
         </div>
       </nav>
+
+      {/* Auth Modal for Login and Signup */}
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={() => setIsAuthModalOpen(false)} 
+        initialMode={authModalMode} 
+      />
+
 
       {/* Main Container */}
       <main className="container">
@@ -929,7 +1024,14 @@ function App() {
                             height: 'auto',
                             lineHeight: '1.3'
                           }}
-                          onClick={() => submitStep(opt.text)}
+                          onClick={() => {
+                            if (!user) {
+                              setAuthModalMode('login');
+                              setIsAuthModalOpen(true);
+                              return;
+                            }
+                            submitStep(opt.text);
+                          }}
                           disabled={isLoading}
                         >
                           <span style={{ fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase', color: opt.type === 'expert' ? 'var(--success)' : 'var(--danger)', display: 'block', marginBottom: '0.2rem' }}>
@@ -944,25 +1046,49 @@ function App() {
                   {/* Chat input box */}
                   <form 
                     className="chat-input-area" 
-                    onSubmit={(e) => { e.preventDefault(); submitStep(chatInput); }}
+                    onSubmit={(e) => { 
+                      e.preventDefault(); 
+                      if (!user) {
+                        setAuthModalMode('login');
+                        setIsAuthModalOpen(true);
+                        return;
+                      }
+                      submitStep(chatInput); 
+                    }}
                   >
                     <input 
                       type="text" 
-                      className="chat-input" 
-                      placeholder="Type your regulating response..." 
+                      className={`chat-input ${!user ? 'cursor-pointer' : ''}`}
+                      placeholder={!user ? "🔒 Sign in or create an account to chat with AI simulator..." : "Type your regulating response..."} 
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
+                      onClick={() => {
+                        if (!user) {
+                          setAuthModalMode('login');
+                          setIsAuthModalOpen(true);
+                        }
+                      }}
+                      readOnly={!user}
                       disabled={isLoading}
                     />
                     <button 
                       type="submit" 
                       className="btn btn-primary" 
                       style={{ padding: '0.75rem 1rem' }}
-                      disabled={isLoading || !chatInput.trim()}
+                      disabled={isLoading || (user && !chatInput.trim())}
+                      onClick={(e) => {
+                        if (!user) {
+                          e.preventDefault();
+                          setAuthModalMode('login');
+                          setIsAuthModalOpen(true);
+                        }
+                      }}
                     >
                       <Send size={18} />
                     </button>
                   </form>
+
+
                 </div>
               </div>
             )}
@@ -1184,4 +1310,13 @@ function App() {
   );
 }
 
+function App() {
+  return (
+    <AuthProvider>
+      <MainAppContent />
+    </AuthProvider>
+  );
+}
+
 export default App;
+
