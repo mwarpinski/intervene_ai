@@ -18,6 +18,7 @@ class User(Base):
     role = Column(String(50), default="teacher")
     grade_level = Column(String(50))
     school_id = Column(String(100))
+    hashed_password = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     simulations = relationship("Simulation", back_populates="user")
